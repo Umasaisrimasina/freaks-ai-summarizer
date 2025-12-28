@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, BookOpen, BrainCircuit, Users, Sun, Moon, LogOut } from 'lucide-react';
+import { LayoutGrid, BookOpen, BrainCircuit, Users, Sun, Moon, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const RootLayout = () => {
@@ -8,6 +8,10 @@ const RootLayout = () => {
   const navigate = useNavigate();
   const { logout, currentUser } = useAuth();
   const [theme, setTheme] = useState('light');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    return saved === 'true';
+  });
 
   useEffect(() => {
     // Check local storage or system preference on mount
@@ -28,6 +32,12 @@ const RootLayout = () => {
     localStorage.setItem('theme', newTheme);
   };
 
+  const toggleSidebar = () => {
+    const newState = !isSidebarCollapsed;
+    setIsSidebarCollapsed(newState);
+    localStorage.setItem('sidebarCollapsed', newState.toString());
+  };
+
   const navItems = [
     { icon: LayoutGrid, label: 'Dashboard', path: '/' },
     { icon: BookOpen, label: 'Knowledge Lab', path: '/knowledge-lab' },
@@ -39,19 +49,92 @@ const RootLayout = () => {
     <div className="layout-container">
       {/* Sidebar */}
       <aside style={{
-        width: '280px',
-        height: '100vh', /* Explicit height */
+        width: isSidebarCollapsed ? '72px' : '280px',
+        height: '100vh',
         backgroundColor: 'var(--bg-secondary)',
         borderRight: '1px solid var(--border-subtle)',
-        padding: '2rem 1.5rem',
+        padding: isSidebarCollapsed ? '2rem 0.75rem' : '2rem 1.5rem',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'background-color 0.3s ease, border-color 0.3s ease'
+        transition: 'width 0.3s ease, padding 0.3s ease, background-color 0.3s ease, border-color 0.3s ease',
+        position: 'relative'
       }}>
+        {/* Toggle Button */}
+        <button
+          onClick={toggleSidebar}
+          style={{
+            position: 'absolute',
+            top: '1.5rem',
+            right: '-12px',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 10,
+            boxShadow: 'var(--shadow-soft)',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--bg-card)';
+          }}
+        >
+          {isSidebarCollapsed ?
+            <ChevronRight size={14} color="var(--text-secondary)" /> :
+            <ChevronLeft size={14} color="var(--text-secondary)" />
+          }
+        </button>
+
         <div>
-          <div style={{ marginBottom: '3rem', paddingLeft: '0.75rem' }}>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>Chronos</h1>
+          <div style={{
+            marginBottom: '3rem',
+            paddingLeft: isSidebarCollapsed ? '0' : '0.75rem',
+            textAlign: isSidebarCollapsed ? 'center' : 'left',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
+            gap: '0.5rem'
+          }}>
+            {isSidebarCollapsed ? (
+              <img
+                src="/chronos logo.jpg"
+                alt="Chronos"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: 'var(--radius-sm)',
+                  objectFit: 'cover'
+                }}
+              />
+            ) : (
+              <>
+                <img
+                  src="/chronos logo.jpg"
+                  alt="Chronos"
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: 'var(--radius-sm)',
+                    objectFit: 'cover'
+                  }}
+                />
+                <h1 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)'
+                }}>
+                  Chronos
+                </h1>
+              </>
+            )}
           </div>
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -61,11 +144,13 @@ const RootLayout = () => {
                 <NavLink
                   key={item.path}
                   to={item.path}
+                  title={isSidebarCollapsed ? item.label : ''}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
                     gap: '0.75rem',
-                    padding: '0.75rem 1rem',
+                    padding: isSidebarCollapsed ? '0.75rem' : '0.75rem 1rem',
                     borderRadius: 'var(--radius-md)',
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                     backgroundColor: isActive ? 'var(--bg-card)' : 'transparent',
@@ -75,7 +160,7 @@ const RootLayout = () => {
                   }}
                 >
                   <item.icon size={20} strokeWidth={1.5} />
-                  <span>{item.label}</span>
+                  {!isSidebarCollapsed && <span>{item.label}</span>}
                 </NavLink>
               );
             })}
@@ -85,7 +170,7 @@ const RootLayout = () => {
         {/* Bottom Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {/* User Info */}
-          {currentUser && (
+          {currentUser && !isSidebarCollapsed && (
             <div style={{
               padding: '0.75rem 1rem',
               borderRadius: 'var(--radius-md)',
@@ -106,11 +191,13 @@ const RootLayout = () => {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
+            title={isSidebarCollapsed ? (theme === 'light' ? 'Dark Mode' : 'Light Mode') : ''}
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
               gap: '0.75rem',
-              padding: '0.75rem 1rem',
+              padding: isSidebarCollapsed ? '0.75rem' : '0.75rem 1rem',
               borderRadius: 'var(--radius-md)',
               color: 'var(--text-secondary)',
               transition: 'all 0.2s ease',
@@ -127,7 +214,7 @@ const RootLayout = () => {
             }}
           >
             {theme === 'light' ? <Moon size={20} strokeWidth={1.5} /> : <Sun size={20} strokeWidth={1.5} />}
-            <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+            {!isSidebarCollapsed && <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>}
           </button>
 
           {/* Logout Button */}
@@ -140,11 +227,13 @@ const RootLayout = () => {
                 console.error('Logout error:', error);
               }
             }}
+            title={isSidebarCollapsed ? 'Logout' : ''}
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
               gap: '0.75rem',
-              padding: '0.75rem 1rem',
+              padding: isSidebarCollapsed ? '0.75rem' : '0.75rem 1rem',
               borderRadius: 'var(--radius-md)',
               color: 'var(--text-secondary)',
               transition: 'all 0.2s ease',
@@ -161,7 +250,7 @@ const RootLayout = () => {
             }}
           >
             <LogOut size={20} strokeWidth={1.5} />
-            <span>Logout</span>
+            {!isSidebarCollapsed && <span>Logout</span>}
           </button>
         </div>
       </aside>
@@ -175,3 +264,4 @@ const RootLayout = () => {
 };
 
 export default RootLayout;
+

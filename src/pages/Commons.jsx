@@ -1,255 +1,149 @@
 import React, { useState } from 'react';
-import { Users, Plus, X, Check, ArrowRight } from 'lucide-react';
+import { Users, Clock, Shield, Music, SkipBack, Play, Pause, SkipForward, Plus, X, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Commons = () => {
     const navigate = useNavigate();
+    const [isPlaying, setIsPlaying] = useState(false);
     const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
     const [roomCode, setRoomCode] = useState('');
-    const [joinError, setJoinError] = useState('');
-    const [notification, setNotification] = useState(null);
-    const [isJoining, setIsJoining] = useState(false);
-    const [joinSuccess, setJoinSuccess] = useState(false);
 
+    // FR-43: Collaborative Study Rooms
     const studyRooms = [
-        { id: 1, name: 'Deep Focus - Physics', participants: 3, max: 5 },
-        { id: 2, name: 'Late Night Lofi', participants: 3, max: 5 },
-        { id: 3, name: 'Group Project | History', participants: 3, max: 5 },
-        { id: 4, name: 'Deep Focus - Physics', participants: 3, max: 5 },
-        { id: 5, name: 'Group Project', participants: 3, max: 5 },
-        { id: 6, name: 'Group Project | History', participants: 3, max: 5 },
+        { id: 1, name: 'Quiet Study A', currentTask: 'Chapter 5', participants: 85 },
+        { id: 2, name: 'Focus Group B', currentTask: 'Project Prep', participants: 42 },
+        { id: 3, name: 'Reading Room C', currentTask: 'Article Review', participants: 67 },
+        { id: 4, name: 'Discussion Hall D', currentTask: 'Topic Brainstorm', participants: 110 },
+        { id: 5, name: 'Workshop E', currentTask: 'Coding Challenge', participants: 35 },
+        { id: 6, name: 'Breakout Space F', currentTask: 'Casual Chat', participants: 28 },
     ];
 
+    const handleJoinRoom = (room) => {
+        // Navigate to Study Arena with room context
+        navigate('/study-arena', { state: { room: room.name } });
+    };
+
     const handleJoinByCode = () => {
-        if (!roomCode.trim()) {
-            setJoinError('Enter a room code to join');
-            return;
+        if (roomCode.trim()) {
+            setIsJoinModalOpen(false);
+            setRoomCode('');
+            navigate('/study-arena', { state: { room: `Room ${roomCode}` } });
         }
-        if (roomCode.toUpperCase() !== 'ABC-123') {
-            setJoinError("Hmm, that code doesn't match any room.");
-            return;
-        }
-        // Success - show loading then success
-        setIsJoining(true);
-        setTimeout(() => {
-            setIsJoining(false);
-            setJoinSuccess(true);
-            setTimeout(() => {
-                setIsJoinModalOpen(false);
-                setRoomCode('');
-                setJoinError('');
-                setJoinSuccess(false);
-                showNotification('You joined the room');
-                navigate('/study-arena');
-            }, 600);
-        }, 800);
-    };
-
-    const handleJoinRoom = (roomName) => {
-        showNotification(`Alex joined ${roomName}`);
-        setTimeout(() => navigate('/study-arena'), 800);
-    };
-
-    const showNotification = (message) => {
-        setNotification(message);
-        setTimeout(() => setNotification(null), 3000);
     };
 
     return (
-        <div className="animate-fade-in" style={{ padding: '2rem', maxWidth: '1100px', margin: '0 auto' }}>
-
-            {/* Notification Toast */}
-            {notification && (
-                <div style={{
-                    position: 'fixed',
-                    top: '1.5rem',
-                    right: '1.5rem',
-                    backgroundColor: 'var(--bg-card)',
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    boxShadow: 'var(--shadow-modal)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    zIndex: 200,
-                    border: '1px solid var(--border-subtle)'
-                }}>
-                    <span style={{ color: 'var(--text-primary)', fontSize: 'var(--text-body)' }}>{notification}</span>
-                    <Check size={16} color="var(--success-600)" />
-                </div>
-            )}
-
-            {/* Header */}
-            <header style={{
-                marginBottom: '2rem',
+        <div style={{
+            minHeight: '100vh',
+            padding: '2rem',
+            position: 'relative'
+        }}>
+            {/* Header: Title + Actions */}
+            <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '1rem'
+                marginBottom: '2rem'
             }}>
-                <h1 style={{ fontSize: 'var(--text-h2)', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    Commons
+                <h1 style={{
+                    fontSize: '2rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)'
+                }}>
+                    The Commons
                 </h1>
 
-                {/* Inline Join Trigger */}
-                <div
-                    onClick={() => setIsJoinModalOpen(true)}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem 1rem',
-                        backgroundColor: 'var(--bg-card)',
-                        border: '1px solid var(--border-subtle)',
-                        borderRadius: '9999px',
-                        cursor: 'pointer',
-                        transition: 'box-shadow var(--transition-fast)'
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-soft)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
-                >
-                    <span style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-body)' }}>Join:</span>
-                    <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-body)' }}>[Code]</span>
-                    <ArrowRight size={16} color="var(--text-muted)" />
-                </div>
-
-                {/* Primary CTA */}
-                <button className="btn btn-primary" onClick={() => navigate('/study-arena')}>
-                    <Plus size={18} />
-                    Create Study Room
-                </button>
-            </header>
-
-            {/* Study Rooms Grid */}
-            <section>
                 <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                    gap: '1rem'
+                    display: 'flex',
+                    gap: '1rem',
+                    alignItems: 'center'
                 }}>
-                    {studyRooms.map((room) => (
-                        <div
-                            key={room.id}
-                            style={{
-                                backgroundColor: 'var(--bg-card)',
-                                borderRadius: 'var(--radius-lg)',
-                                padding: '1.25rem',
-                                border: '1px solid var(--border-subtle)',
-                                transition: 'box-shadow var(--transition-base)'
-                            }}
-                            onMouseOver={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-soft)'; }}
-                            onMouseOut={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
-                        >
-                            <h3 style={{
-                                fontSize: 'var(--text-body)',
-                                fontWeight: 600,
-                                color: 'var(--text-primary)',
-                                marginBottom: '0.5rem'
-                            }}>
-                                {room.name}
-                            </h3>
-
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginTop: '1rem'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem'
-                                }}>
-                                    {/* Avatar Stack */}
-                                    <div style={{ display: 'flex', marginRight: '0.25rem' }}>
-                                        {[...Array(Math.min(room.participants, 3))].map((_, i) => (
-                                            <div
-                                                key={i}
-                                                style={{
-                                                    width: '24px',
-                                                    height: '24px',
-                                                    borderRadius: '50%',
-                                                    backgroundColor: `hsl(${i * 60 + 200}, 60%, 70%)`,
-                                                    border: '2px solid var(--bg-card)',
-                                                    marginLeft: i > 0 ? '-8px' : '0'
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-small)' }}>
-                                        {room.participants}/{room.max}
-                                    </span>
-                                </div>
-
-                                <button
-                                    onClick={() => handleJoinRoom(room.name)}
-                                    style={{
-                                        background: 'none',
-                                        border: '1px solid var(--border-subtle)',
-                                        borderRadius: 'var(--radius-md)',
-                                        padding: '0.35rem 0.75rem',
-                                        color: 'var(--text-secondary)',
-                                        fontSize: 'var(--text-small)',
-                                        cursor: 'pointer',
-                                        transition: 'all var(--transition-fast)'
-                                    }}
-                                    onMouseOver={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'var(--primary-50)';
-                                        e.currentTarget.style.borderColor = 'var(--primary-300)';
-                                        e.currentTarget.style.color = 'var(--primary-700)';
-                                    }}
-                                    onMouseOut={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'transparent';
-                                        e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                                        e.currentTarget.style.color = 'var(--text-secondary)';
-                                    }}
-                                >
-                                    Join
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* Join Room Modal */}
-            {isJoinModalOpen && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 100
-                    }}
-                    onClick={() => {
-                        setIsJoinModalOpen(false);
-                        setRoomCode('');
-                        setJoinError('');
-                    }}
-                >
+                    {/* Join by Code Search Bar */}
                     <div
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={() => setIsJoinModalOpen(true)}
                         style={{
-                            backgroundColor: 'var(--bg-card)',
-                            borderRadius: 'var(--radius-lg)',
-                            boxShadow: 'var(--shadow-modal)',
-                            width: '100%',
-                            maxWidth: '400px',
-                            padding: '2rem',
-                            position: 'relative'
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.75rem 1.25rem',
+                            backgroundColor: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-subtle)',
+                            borderRadius: 'var(--radius-md)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+                            e.currentTarget.style.borderColor = 'var(--border-hover)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                            e.currentTarget.style.borderColor = 'var(--border-subtle)';
                         }}
                     >
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Join:</span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>[Code]</span>
+                        <ArrowRight size={16} color="var(--text-muted)" />
+                    </div>
+
+                    {/* Create Study Room Button */}
+                    <button
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.75rem 1.5rem',
+                            backgroundColor: '#3B82F6',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s ease'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
+                    >
+                        <Plus size={18} />
+                        Create Study Room
+                    </button>
+                </div>
+            </div>
+
+            {/* Join Modal */}
+            {isJoinModalOpen && (
+                <>
+                    {/* Backdrop */}
+                    <div
+                        onClick={() => setIsJoinModalOpen(false)}
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                            zIndex: 1000
+                        }}
+                    />
+
+                    {/* Modal */}
+                    <div style={{
+                        position: 'fixed',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '2rem',
+                        width: '90%',
+                        maxWidth: '400px',
+                        zIndex: 1001,
+                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+                    }}>
                         {/* Close Button */}
                         <button
-                            onClick={() => {
-                                setIsJoinModalOpen(false);
-                                setRoomCode('');
-                                setJoinError('');
-                            }}
+                            onClick={() => setIsJoinModalOpen(false)}
                             style={{
                                 position: 'absolute',
                                 top: '1rem',
@@ -257,83 +151,426 @@ const Commons = () => {
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
-                                color: 'var(--text-muted)'
+                                color: '#6B7280',
+                                padding: '0.25rem'
                             }}
                         >
                             <X size={20} />
                         </button>
 
+                        {/* Modal Title */}
                         <h2 style={{
-                            fontSize: 'var(--text-h3)',
+                            fontSize: '1.5rem',
                             fontWeight: 600,
-                            color: 'var(--text-primary)',
+                            color: '#1F2937',
                             marginBottom: '1.5rem',
                             textAlign: 'center'
                         }}>
                             Join Study Room
                         </h2>
 
-                        {/* Room Code Input */}
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={{
-                                display: 'block',
-                                fontSize: 'var(--text-small)',
-                                fontWeight: 500,
-                                color: 'var(--text-secondary)',
-                                marginBottom: '0.5rem'
-                            }}>
-                                Room Code
-                            </label>
-                            <input
-                                type="text"
-                                value={roomCode}
-                                onChange={(e) => {
-                                    setRoomCode(e.target.value);
-                                    setJoinError('');
-                                }}
-                                placeholder="ABC-123"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.875rem 1rem',
-                                    fontSize: 'var(--text-body)',
-                                    border: joinError ? '2px solid var(--error-400)' : '2px solid var(--border-subtle)',
-                                    borderRadius: 'var(--radius-md)',
-                                    outline: 'none',
-                                    backgroundColor: joinError ? 'var(--error-50)' : 'var(--bg-primary)',
-                                    color: 'var(--text-primary)',
-                                    transition: 'border-color var(--transition-fast)'
-                                }}
-                                onFocus={(e) => {
-                                    if (!joinError) e.target.style.borderColor = 'var(--primary-400)';
-                                }}
-                                onBlur={(e) => {
-                                    if (!joinError) e.target.style.borderColor = 'var(--border-subtle)';
-                                }}
-                                autoFocus
-                            />
-                            {joinError && (
-                                <p style={{
-                                    color: 'var(--error-600)',
-                                    fontSize: 'var(--text-small)',
-                                    marginTop: '0.5rem'
-                                }}>
-                                    {joinError}
-                                </p>
-                            )}
-                        </div>
+                        {/* Room Code Label */}
+                        <label style={{
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            color: '#6B7280',
+                            marginBottom: '0.5rem'
+                        }}>
+                            Room Code
+                        </label>
 
-                        {/* Join Button */}
+                        {/* Room Code Input */}
+                        <input
+                            type="text"
+                            value={roomCode}
+                            onChange={(e) => setRoomCode(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleJoinByCode()}
+                            placeholder="ABC-123"
+                            style={{
+                                width: '100%',
+                                padding: '0.875rem 1rem',
+                                fontSize: '1rem',
+                                border: '1px solid #D1D5DB',
+                                borderRadius: 'var(--radius-md)',
+                                marginBottom: '1.5rem',
+                                outline: 'none',
+                                transition: 'border-color 0.2s ease'
+                            }}
+                            onFocus={(e) => e.currentTarget.style.borderColor = '#3B82F6'}
+                            onBlur={(e) => e.currentTarget.style.borderColor = '#D1D5DB'}
+                        />
+
+                        {/* Join Room Button */}
                         <button
-                            className={`btn btn-primary ${isJoining ? 'btn-loading' : ''} ${joinSuccess ? 'btn-success' : ''}`}
                             onClick={handleJoinByCode}
-                            style={{ width: '100%', marginTop: '0.5rem' }}
-                            disabled={isJoining || joinSuccess}
+                            style={{
+                                width: '100%',
+                                padding: '0.875rem',
+                                backgroundColor: '#3B82F6',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                borderRadius: 'var(--radius-md)',
+                                fontSize: '1rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'background-color 0.2s ease'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
                         >
-                            {joinSuccess ? 'Joined' : 'Join Room'}
+                            Join Room
                         </button>
                     </div>
-                </div>
+                </>
             )}
+
+            {/* Main Layout: Rooms Grid + Floating Sidebar */}
+            <div style={{
+                display: 'flex',
+                gap: '2rem',
+                position: 'relative'
+            }}>
+                {/* Room Grid (Left) */}
+                <div style={{
+                    flex: 1,
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '1rem',
+                    alignContent: 'start'
+                }}>
+                    {studyRooms.map((room) => (
+                        <div
+                            key={room.id}
+                            style={{
+                                backgroundColor: 'var(--bg-card)',
+                                borderRadius: 'var(--radius-lg)',
+                                padding: '1.5rem',
+                                border: '1px solid var(--border-subtle)',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer',
+                                boxShadow: 'var(--shadow-soft)'
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border-hover)';
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'var(--shadow-soft)';
+                            }}
+                        >
+                            {/* Room Name */}
+                            <h3 style={{
+                                fontSize: '1.125rem',
+                                fontWeight: 600,
+                                color: 'var(--text-primary)',
+                                marginBottom: '0.5rem'
+                            }}>
+                                {room.name}
+                            </h3>
+
+                            {/* FR-44: Task Sync - Current Task */}
+                            <p style={{
+                                fontSize: '0.875rem',
+                                color: 'var(--text-muted)',
+                                marginBottom: '1rem'
+                            }}>
+                                Currently: {room.currentTask}
+                            </p>
+
+                            {/* Participants + Join Button */}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    color: 'var(--text-muted)',
+                                    fontSize: '0.875rem'
+                                }}>
+                                    <Users size={16} />
+                                    <span>{room.participants} participants</span>
+                                </div>
+
+                                <button
+                                    onClick={() => handleJoinRoom(room)}
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        backgroundColor: 'var(--text-secondary)',
+                                        color: 'var(--bg-card)',
+                                        border: 'none',
+                                        borderRadius: 'var(--radius-md)',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        cursor: 'pointer',
+                                        transition: 'background-color 0.2s ease'
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--text-primary)'}
+                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--text-secondary)'}
+                                >
+                                    Join
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Floating Sidebar (Right) */}
+                <div style={{
+                    width: '320px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                }}>
+                    {/* Community Stats Card */}
+                    <div style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '1.5rem',
+                        border: '1px solid var(--border-subtle)',
+                        boxShadow: 'var(--shadow-soft)'
+                    }}>
+                        <h2 style={{
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            color: 'var(--text-primary)',
+                            marginBottom: '1rem'
+                        }}>
+                            Community Stats
+                        </h2>
+
+                        {/* Collective Achievement (White Hat) */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            marginBottom: '0.75rem'
+                        }}>
+                            <Clock size={20} color="var(--text-muted)" />
+                            <div>
+                                <p style={{
+                                    fontSize: '0.875rem',
+                                    color: 'var(--text-secondary)'
+                                }}>
+                                    Together: <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>1,247 hours</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem'
+                        }}>
+                            <Users size={20} color="var(--text-muted)" />
+                            <div>
+                                <p style={{
+                                    fontSize: '0.875rem',
+                                    color: 'var(--text-secondary)'
+                                }}>
+                                    Active learners: <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>234</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Your Path Card (FR-45, FR-46) */}
+                    <div style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '1.5rem',
+                        border: '1px solid var(--border-subtle)',
+                        boxShadow: 'var(--shadow-soft)'
+                    }}>
+                        <h2 style={{
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            color: 'var(--text-primary)',
+                            marginBottom: '1rem'
+                        }}>
+                            Your Path
+                        </h2>
+
+                        {/* FR-45: XP (Contribution-based, White Hat) */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            marginBottom: '0.75rem'
+                        }}>
+                            <span style={{ fontSize: '1.25rem' }}>🌱</span>
+                            <div>
+                                <p style={{
+                                    fontSize: '0.875rem',
+                                    color: 'var(--text-secondary)'
+                                }}>
+                                    Contributions: <span style={{ fontWeight: 600, color: '#10B981' }}>125 points</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* FR-45: League (Narrative, opt-in) */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            marginBottom: '0.75rem'
+                        }}>
+                            <span style={{ fontSize: '1.25rem' }}>🛡️</span>
+                            <div>
+                                <p style={{
+                                    fontSize: '0.875rem',
+                                    color: 'var(--text-secondary)'
+                                }}>
+                                    Guild: <span style={{ fontWeight: 600, color: '#3B82F6' }}>Explorers</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* FR-46: Streak (Continuity framing, White Hat) */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            marginBottom: '0.75rem'
+                        }}>
+                            <span style={{ fontSize: '1.25rem' }}>🔥</span>
+                            <div>
+                                <p style={{
+                                    fontSize: '0.875rem',
+                                    color: 'var(--text-secondary)'
+                                }}>
+                                    Streak: <span style={{ fontWeight: 600, color: '#F59E0B' }}>12 days</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* FR-46: Streak Preservation (Care/support tone) */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem'
+                        }}>
+                            <Shield size={20} color="var(--text-muted)" />
+                            <div>
+                                <p style={{
+                                    fontSize: '0.875rem',
+                                    color: 'var(--text-muted)'
+                                }}>
+                                    Shield available
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* FR-47: Shared Playlist Widget (Bottom-Right) */}
+            <div style={{
+                position: 'fixed',
+                bottom: '2rem',
+                right: '2rem',
+                width: '280px',
+                backgroundColor: 'var(--bg-card)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '1.25rem',
+                border: '1px solid var(--border-subtle)',
+                boxShadow: 'var(--shadow-md)'
+            }}>
+                {/* Album Art Placeholder */}
+                <div style={{
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: 'var(--radius-sm)',
+                    marginBottom: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <Music size={24} color="var(--text-muted)" />
+                </div>
+
+                <h3 style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginBottom: '0.25rem'
+                }}>
+                    Shared Playlist
+                </h3>
+
+                <p style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--text-muted)',
+                    marginBottom: '0.75rem'
+                }}>
+                    Earned by community
+                </p>
+
+                {/* Progress Bar */}
+                <div style={{
+                    width: '100%',
+                    height: '4px',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: '2px',
+                    marginBottom: '0.75rem',
+                    overflow: 'hidden'
+                }}>
+                    <div style={{
+                        width: '45%',
+                        height: '100%',
+                        backgroundColor: 'var(--accent-primary)'
+                    }} />
+                </div>
+
+                {/* Playback Controls */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '1rem'
+                }}>
+                    <button style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '0.25rem'
+                    }}>
+                        <SkipBack size={20} />
+                    </button>
+
+                    <button
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--text-primary)',
+                            cursor: 'pointer',
+                            padding: '0.25rem'
+                        }}
+                    >
+                        {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                    </button>
+
+                    <button style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '0.25rem'
+                    }}>
+                        <SkipForward size={20} />
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };

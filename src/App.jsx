@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import KnowledgeLab from './pages/KnowledgeLab';
 import StudyArena from './pages/StudyArena';
 import Commons from './pages/Commons';
+import ProfileSettings from './pages/ProfileSettings';
 
 function App() {
   return (
@@ -23,14 +24,14 @@ function App() {
           <Route path="/email-verified" element={<EmailVerified />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          
+
           {/* Verify Email Route - requires login but not verification */}
           <Route path="/verify-email" element={
             <ProtectedRoute requireVerification={false}>
               <VerifyEmail />
             </ProtectedRoute>
           } />
-          
+
           {/* Protected Routes - require verification for email/password users */}
           <Route path="/" element={
             <ProtectedRoute requireVerification={true}>
@@ -41,8 +42,9 @@ function App() {
             <Route path="knowledge-lab" element={<KnowledgeLab />} />
             <Route path="study-arena" element={<StudyArena />} />
             <Route path="commons" element={<Commons />} />
+            <Route path="profile-settings" element={<ProfileSettings />} />
           </Route>
-          
+
           {/* Redirect unknown routes to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

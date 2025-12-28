@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Check, Flag, PenLine, Undo2, Info, X, FileText, Link, Type, Mic, ChevronDown, ChevronUp, Upload, Search } from 'lucide-react';
 
 const KnowledgeLab = () => {
@@ -99,18 +100,20 @@ const KnowledgeLab = () => {
         </button>
       </header>
 
-      {/* Search Popup Modal */}
-      {isSearchPopupOpen && (
+      {/* Search Popup Modal - Portal to body for full-screen blur */}
+      {isSearchPopupOpen && createPortal(
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'center',
             paddingTop: '10vh',
-            zIndex: 100
+            zIndex: 9999
           }}
           onClick={() => setIsSearchPopupOpen(false)}
         >
@@ -196,7 +199,7 @@ const KnowledgeLab = () => {
               ))}
             </div>
           </div>
-        </div>
+        </div>, document.body
       )}
 
       {/* Document View */}

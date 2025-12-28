@@ -40,13 +40,27 @@
 
   /* Semantic: Error */
   --error-50: #FEF2F2;
+  --error-200: #FECACA;
   --error-500: #EF4444;
   --error-600: #DC2626;
+  --error-700: #B91C1C;
 
   /* Semantic: Warning */
   --warning-50: #FFFBEB;
+  --warning-200: #FDE68A;
   --warning-500: #F59E0B;
   --warning-600: #D97706;
+  --warning-700: #B45309;
+
+  /* Additional shades for UI */
+  --primary-100: #DBEAFE;
+  --primary-300: #93C5FD;
+  --primary-400: #60A5FA;
+  --secondary-400: #FBBF24;
+  --accent-400: #F472B6;
+  --bg-tertiary: var(--neutral-300);
+  --border-hover: var(--neutral-400);
+  --shadow-md: 0 4px 12px rgba(28, 25, 23, 0.1);
 
   /* ===== THEME TOKENS (Light Mode) ===== */
   --bg-primary: var(--neutral-50);
