@@ -1,58 +1,10 @@
-feat: UI refinements, Profile Settings page, and collapsible sidebar
+fix: resolve dark mode UI issues and KnowledgeLab syntax error
 
-## Study Arena
-- Updated flashcard card gradient to slate blue (#4C5C82 → #3D4A6B)
-- Added dynamic glow effects on modal borders for answer feedback
-  - Green glow for correct/good/excellent
-  - Yellow glow for average ratings
-  - Red glow for incorrect/bad
-- Removed Quiz/Flashcard toggle from modal header
-- Added colored backgrounds and borders to rating buttons (Bad, Average, Good, Excellent)
-
-## Knowledge Lab & Dashboard - Modal Improvements
-- Implemented React Portal for Study Materials modal
-- Implemented React Portal for Command Palette modal
-- Full-screen backdrop blur now covers entire app including sidebar
-- Increased z-index to 9999 for proper layering
-
-## Commons Page - Light Mode Support
-- Updated room cards to use CSS theme variables
-- Updated Community Stats, Your Path, and Shared Playlist widgets
-- Changed Join button from yellow to neutral gray
-- All components now work correctly in both light and dark modes
-
-## Profile Settings Page (NEW)
-- Created ProfileSettings.jsx with all required sections:
-  - Geometric avatar selector (6 abstract patterns)
-  - Account credentials management
-  - Password change with validation
-  - System preferences (reduced motion, high contrast, notifications)
-  - Calendar integration (Google Calendar)
-  - Custom AI API key management
-  - Data governance (export, delete account)
-- One-column layout, max 600px width
-- Progressive disclosure for advanced settings
-- Undo bars instead of confirmation dialogs
-- WCAG AA accessible with keyboard navigation
-
-## Collapsible Sidebar
-- Added toggle button with ChevronLeft/ChevronRight icons
-- Icons-only mode when collapsed (72px width)
-- Full sidebar with labels when expanded (280px width)
-- State persisted in localStorage
-- Smooth 0.3s transition animation
-
-## Dashboard
-- Added avatar.jpg as default profile picture
-- Click-outside-to-close for profile dropdown menu
-- Profile Settings navigation from dropdown
-
-## Branding
-- Updated sidebar logo to use chronos logo.jpg
-- Changed favicon to chronos logo.jpg
-- Updated page title to "Chronos - AI Study Companion"
-
-## CSS
-- Added missing color variables (warning-200, error-200, error-700, etc.)
-- Added --bg-tertiary, --border-hover, --shadow-md variables
-- Added primary-100/300/400, secondary-400, accent-400 shades
+- Fix createPortal syntax in KnowledgeLab.jsx (extra closing div)
+- Change highlight from --secondary-100 to --accent-light for dark mode
+- Update btn-secondary hover from yellow to blue (--primary-500)
+- Fix Join Code button hover in Commons
+- Add glassy/glassmorphism effects to Commons widgets (room cards, 
+  Community Stats, Your Path, Shared Playlist)
+- Add backdrop blur to KnowledgeLab Add Study Material modal
+- Remove LABS section from sidebar

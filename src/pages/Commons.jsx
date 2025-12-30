@@ -65,18 +65,19 @@ const Commons = () => {
                             alignItems: 'center',
                             gap: '0.5rem',
                             padding: '0.75rem 1.25rem',
-                            backgroundColor: 'var(--bg-secondary)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
                             border: '1px solid var(--border-subtle)',
                             borderRadius: 'var(--radius-md)',
                             cursor: 'pointer',
-                            transition: 'all 0.2s ease'
+                            transition: 'all 0.2s ease',
+                            backdropFilter: 'blur(8px)'
                         }}
                         onMouseOver={(e) => {
-                            e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-                            e.currentTarget.style.borderColor = 'var(--border-hover)';
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                            e.currentTarget.style.borderColor = 'var(--primary-500)';
                         }}
                         onMouseOut={(e) => {
-                            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
                             e.currentTarget.style.borderColor = 'var(--border-subtle)';
                         }}
                     >
@@ -133,13 +134,14 @@ const Commons = () => {
                         top: '50%',
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
-                        backgroundColor: '#FFFFFF',
+                        backgroundColor: 'var(--bg-card)',
                         borderRadius: 'var(--radius-lg)',
                         padding: '2rem',
                         width: '90%',
                         maxWidth: '400px',
                         zIndex: 1001,
-                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+                        boxShadow: 'var(--shadow-modal)',
+                        border: '1px solid var(--border-subtle)'
                     }}>
                         {/* Close Button */}
                         <button
@@ -151,7 +153,7 @@ const Commons = () => {
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
-                                color: '#6B7280',
+                                color: 'var(--text-muted)',
                                 padding: '0.25rem'
                             }}
                         >
@@ -162,7 +164,7 @@ const Commons = () => {
                         <h2 style={{
                             fontSize: '1.5rem',
                             fontWeight: 600,
-                            color: '#1F2937',
+                            color: 'var(--text-primary)',
                             marginBottom: '1.5rem',
                             textAlign: 'center'
                         }}>
@@ -174,7 +176,7 @@ const Commons = () => {
                             display: 'block',
                             fontSize: '0.875rem',
                             fontWeight: 500,
-                            color: '#6B7280',
+                            color: 'var(--text-secondary)',
                             marginBottom: '0.5rem'
                         }}>
                             Room Code
@@ -191,14 +193,16 @@ const Commons = () => {
                                 width: '100%',
                                 padding: '0.875rem 1rem',
                                 fontSize: '1rem',
-                                border: '1px solid #D1D5DB',
+                                border: '1px solid var(--border-subtle)',
                                 borderRadius: 'var(--radius-md)',
                                 marginBottom: '1.5rem',
                                 outline: 'none',
-                                transition: 'border-color 0.2s ease'
+                                transition: 'border-color 0.2s ease',
+                                backgroundColor: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)'
                             }}
-                            onFocus={(e) => e.currentTarget.style.borderColor = '#3B82F6'}
-                            onBlur={(e) => e.currentTarget.style.borderColor = '#D1D5DB'}
+                            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--accent-primary)'}
+                            onBlur={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
                         />
 
                         {/* Join Room Button */}
@@ -207,7 +211,7 @@ const Commons = () => {
                             style={{
                                 width: '100%',
                                 padding: '0.875rem',
-                                backgroundColor: '#3B82F6',
+                                backgroundColor: 'var(--primary-600)',
                                 color: '#FFFFFF',
                                 border: 'none',
                                 borderRadius: 'var(--radius-md)',
@@ -216,8 +220,8 @@ const Commons = () => {
                                 cursor: 'pointer',
                                 transition: 'background-color 0.2s ease'
                             }}
-                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
-                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-700)'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-600)'}
                         >
                             Join Room
                         </button>
@@ -243,23 +247,27 @@ const Commons = () => {
                         <div
                             key={room.id}
                             style={{
-                                backgroundColor: 'var(--bg-card)',
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                backdropFilter: 'blur(12px)',
+                                WebkitBackdropFilter: 'blur(12px)',
                                 borderRadius: 'var(--radius-lg)',
                                 padding: '1.5rem',
-                                border: '1px solid var(--border-subtle)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
                                 transition: 'all 0.2s ease',
                                 cursor: 'pointer',
-                                boxShadow: 'var(--shadow-soft)'
+                                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
                             }}
                             onMouseOver={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--border-hover)';
+                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
                                 e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.15)';
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
                             }}
                             onMouseOut={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
                                 e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = 'var(--shadow-soft)';
+                                e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
                             }}
                         >
                             {/* Room Name */}
@@ -330,11 +338,13 @@ const Commons = () => {
                 }}>
                     {/* Community Stats Card */}
                     <div style={{
-                        backgroundColor: 'var(--bg-card)',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
                         borderRadius: 'var(--radius-lg)',
                         padding: '1.5rem',
-                        border: '1px solid var(--border-subtle)',
-                        boxShadow: 'var(--shadow-soft)'
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
                     }}>
                         <h2 style={{
                             fontSize: '1rem',
@@ -382,11 +392,13 @@ const Commons = () => {
 
                     {/* Your Path Card (FR-45, FR-46) */}
                     <div style={{
-                        backgroundColor: 'var(--bg-card)',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
                         borderRadius: 'var(--radius-lg)',
                         padding: '1.5rem',
-                        border: '1px solid var(--border-subtle)',
-                        boxShadow: 'var(--shadow-soft)'
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
                     }}>
                         <h2 style={{
                             fontSize: '1rem',
@@ -477,11 +489,13 @@ const Commons = () => {
                 bottom: '2rem',
                 right: '2rem',
                 width: '280px',
-                backgroundColor: 'var(--bg-card)',
+                background: 'rgba(255, 255, 255, 0.03)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
                 borderRadius: 'var(--radius-lg)',
                 padding: '1.25rem',
-                border: '1px solid var(--border-subtle)',
-                boxShadow: 'var(--shadow-md)'
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
             }}>
                 {/* Album Art Placeholder */}
                 <div style={{

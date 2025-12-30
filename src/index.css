@@ -304,14 +304,14 @@ button {
 /* Secondary Button */
 .btn-secondary {
   background-color: var(--bg-card);
-  color: var(--primary-600);
+  color: var(--primary-500);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:hover {
-  background-color: var(--neutral-100);
-  border-color: var(--primary-600);
+  background-color: var(--bg-secondary);
+  border-color: var(--primary-500);
   box-shadow: var(--shadow-soft);
 }
 
