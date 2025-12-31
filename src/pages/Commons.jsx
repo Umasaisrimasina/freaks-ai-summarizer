@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Users, Clock, Shield, Music, SkipBack, Play, Pause, SkipForward, Plus, X, ArrowRight, Mic, MicOff, Video, VideoOff, LogOut, FileText } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Users, Clock, Shield, Music, SkipBack, Play, Pause, SkipForward, Plus, X, ArrowRight, Mic, MicOff, Video, VideoOff, LogOut, FileText, Monitor } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useVideoProvider } from '../hooks/useVideoProvider';
 
 const Commons = () => {
     const navigate = useNavigate();
@@ -10,18 +11,53 @@ const Commons = () => {
 
     // Room Mode State (Silent Presence)
     const [activeRoom, setActiveRoom] = useState(null);
-    const [isMuted, setIsMuted] = useState(true);
-    const [isCameraOn, setIsCameraOn] = useState(false);
     const [floatingVideoPosition, setFloatingVideoPosition] = useState({ x: null, y: null });
 
-    // Mock participants for room mode
-    const [participants] = useState([
-        { id: 1, name: 'Jordan D.', initials: 'JD', color: '#3B82F6', isSpeaking: false, hasCamera: false },
-        { id: 2, name: 'Kesav S.', initials: 'KS', color: '#10B981', isSpeaking: true, hasCamera: false },
-        { id: 3, name: 'Mena R.', initials: 'MR', color: '#8B5CF6', isSpeaking: false, hasCamera: false },
-        { id: 4, name: 'Blake L.', initials: 'BL', color: '#6B7280', isSpeaking: false, hasCamera: true },
-        { id: 5, name: 'You', initials: 'You', color: '#F59E0B', isSpeaking: false, hasCamera: false, isMe: true },
-    ]);
+    // Ref for local video element
+    const localVideoRef = useRef(null);
+
+    // Video provider hook - manages participants, camera, mic, screen share
+    const {
+        connect: connectVideo,
+        disconnect: disconnectVideo,
+        isConnecting: isVideoConnecting,
+        isConnected: isVideoConnected,
+        error: videoError,
+        participants: videoParticipants,
+        localParticipant,
+        isCameraOn,
+        isMicOn,
+        isScreenSharing,
+        toggleCamera,
+        toggleMic,
+        toggleScreenShare,
+        localVideoStream,
+        joinCode,
+    } = useVideoProvider();
+
+    // Attach local video stream to video element when available
+    useEffect(() => {
+        if (localVideoRef.current && localVideoStream) {
+            localVideoRef.current.srcObject = localVideoStream;
+        } else if (localVideoRef.current) {
+            localVideoRef.current.srcObject = null;
+        }
+    }, [localVideoStream]);
+
+    // Map video participants to UI format (includes video stream for remote participants)
+    const participants = videoParticipants.length > 0
+        ? videoParticipants.map(p => ({
+            id: p.id,
+            name: p.name,
+            initials: p.initials,
+            color: p.color,
+            isSpeaking: p.isSpeaking,
+            hasCamera: p.isCameraOn,
+            isMe: p.isLocal,
+            videoStream: p.videoStream,
+        }))
+        : [];
+
     // FR-43: Collaborative Study Rooms
     const studyRooms = [
         { id: 1, name: 'Quiet Study A', currentTask: 'Chapter 5', participants: 85 },
@@ -32,24 +68,89 @@ const Commons = () => {
         { id: 6, name: 'Breakout Space F', currentTask: 'Casual Chat', participants: 28 },
     ];
 
-    const handleJoinRoom = (room) => {
-        // Enter room mode in-place (Silent Presence)
+    /**
+     * Handle joining a room
+     * SECURITY: Only sends roomId to server; identity is extracted server-side
+     * from the verified Firebase token. Never sends userId/userName from client.
+     */
+    const handleJoinRoom = async (room) => {
+        // Enter room mode in-place FIRST (Silent Presence UI)
+        // This ensures the UI transitions immediately
         setActiveRoom(room);
-    };
 
-    const handleJoinByCode = () => {
-        if (roomCode.trim()) {
-            setIsJoinModalOpen(false);
-            const customRoom = { id: 'custom', name: `Room ${roomCode}`, currentTask: 'Study Session', participants: 1 };
-            setRoomCode('');
-            setActiveRoom(customRoom);
+        // THEN attempt video connection (best-effort, non-blocking for UI)
+        // Generate a safe room ID from the room name
+        const roomId = `room-${room.id}-${room.name.toLowerCase().replace(/\s+/g, '-')}`;
+
+        // SECURITY: connectVideo only sends roomId
+        // Server extracts identity from Firebase token via Authorization header
+        // Connection failure doesn't block UI - user can still see room mode
+        try {
+            await connectVideo(roomId);
+        } catch (err) {
+            // Video connection failed - room mode still works
+            console.warn('[Commons] Video connection failed, continuing in demo mode');
         }
     };
 
+    /**
+     * Handle joining by code
+     * Same security model as handleJoinRoom
+     */
+    const handleJoinByCode = async () => {
+        if (roomCode.trim()) {
+            setIsJoinModalOpen(false);
+            const customRoom = { id: 'custom', name: `Room ${roomCode}`, currentTask: 'Study Session', participants: 1 };
+            const code = roomCode.trim();
+            setRoomCode('');
+
+            // Enter room mode in-place FIRST
+            setActiveRoom(customRoom);
+
+            // THEN attempt video connection (best-effort)
+            try {
+                await connectVideo(`room-custom-${code}`);
+            } catch (err) {
+                console.warn('[Commons] Video connection failed, continuing in demo mode');
+            }
+        }
+    };
+
+    /**
+     * Handle leaving a room
+     * Disconnects from video and cleans up resources
+     */
     const handleLeaveRoom = () => {
+        // Disconnect from video (cleans up credentials and resets state)
+        disconnectVideo();
+
+        // Reset local UI state
         setActiveRoom(null);
-        setIsMuted(true);
-        setIsCameraOn(false);
+    };
+
+    /**
+     * Handle creating a new study room
+     * Generates a unique room ID and enters room mode
+     */
+    const handleCreateRoom = async () => {
+        // Generate a unique room ID
+        const roomId = `room-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+        const newRoom = {
+            id: roomId,
+            name: 'New Study Room',
+            currentTask: 'Study Session',
+            participants: 1
+        };
+
+        // Enter room mode in-place FIRST
+        setActiveRoom(newRoom);
+
+        // THEN attempt video connection (best-effort)
+        try {
+            await connectVideo(roomId);
+        } catch (err) {
+            console.warn('[Commons] Video connection failed, continuing in demo mode');
+        }
     };
 
     return (
@@ -80,7 +181,31 @@ const Commons = () => {
                         {activeRoom.name}
                     </h1>
 
-                    {/* Participant Avatars Row */}
+                    {/* Join Code - shareable room code */}
+                    {joinCode && (
+                        <div
+                            onClick={() => {
+                                navigator.clipboard.writeText(joinCode);
+                                alert('Room code copied!');
+                            }}
+                            style={{
+                                padding: '0.25rem 0.75rem',
+                                backgroundColor: 'var(--bg-secondary)',
+                                borderRadius: 'var(--radius-sm)',
+                                border: '1px solid var(--border-subtle)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                            }}
+                            title="Click to copy room code"
+                        >
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Code:</span>
+                            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary)', letterSpacing: '0.1em' }}>
+                                {joinCode}
+                            </span>
+                        </div>
+                    )}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -210,6 +335,7 @@ const Commons = () => {
 
                         {/* Create Study Room Button */}
                         <button
+                            onClick={handleCreateRoom}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -360,52 +486,142 @@ const Commons = () => {
                     position: 'relative',
                     minHeight: '60vh'
                 }}>
-                    {/* Shared Materials Workspace */}
+                    {/* Video Grid - shows all participants */}
                     <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: 'grid',
+                        gridTemplateColumns: participants.length <= 2
+                            ? 'repeat(auto-fit, minmax(400px, 1fr))'
+                            : 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: '1rem',
+                        padding: '1rem',
                         minHeight: '50vh',
-                        backgroundColor: 'var(--bg-card)',
-                        borderRadius: 'var(--radius-lg)',
-                        border: '1px solid var(--border-subtle)',
-                        padding: '3rem'
                     }}>
-                        <FileText size={64} color="var(--text-muted)" strokeWidth={1} />
-                        <h2 style={{
-                            marginTop: '1.5rem',
-                            fontSize: '1.25rem',
-                            fontWeight: 500,
-                            color: 'var(--text-primary)'
-                        }}>
-                            Shared Materials Area
-                        </h2>
-                        <p style={{
-                            marginTop: '0.5rem',
-                            fontSize: '0.875rem',
-                            color: 'var(--text-muted)',
-                            textAlign: 'center',
-                            maxWidth: '300px'
-                        }}>
-                            Drag and drop documents, flashcards, or notes to share with the room.
-                        </p>
-                        <button
-                            className="btn btn-secondary"
-                            style={{ marginTop: '1.5rem' }}
-                        >
-                            Browse Materials
-                        </button>
+                        {participants.map((p) => (
+                            <div
+                                key={p.id}
+                                style={{
+                                    aspectRatio: '16/9',
+                                    backgroundColor: 'var(--neutral-800)',
+                                    borderRadius: 'var(--radius-lg)',
+                                    border: p.isSpeaking
+                                        ? '3px solid #10B981'
+                                        : '1px solid var(--border-subtle)',
+                                    overflow: 'hidden',
+                                    position: 'relative',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                {/* Video or Avatar */}
+                                {p.hasCamera && (p.isMe ? localVideoStream : p.videoStream) ? (
+                                    <video
+                                        autoPlay
+                                        playsInline
+                                        muted={p.isMe}
+                                        ref={(el) => {
+                                            if (el) {
+                                                if (p.isMe && localVideoStream) {
+                                                    el.srcObject = localVideoStream;
+                                                } else if (!p.isMe && p.videoStream) {
+                                                    el.srcObject = p.videoStream;
+                                                }
+                                            }
+                                        }}
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover',
+                                            transform: p.isMe ? 'scaleX(-1)' : 'none',
+                                        }}
+                                    />
+                                ) : (
+                                    /* Avatar fallback when camera is off */
+                                    <div style={{
+                                        width: '80px',
+                                        height: '80px',
+                                        borderRadius: '50%',
+                                        backgroundColor: p.color,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#FFFFFF',
+                                        fontSize: '1.5rem',
+                                        fontWeight: 600,
+                                    }}>
+                                        {p.initials}
+                                    </div>
+                                )}
+
+                                {/* Name overlay */}
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '0.5rem',
+                                    left: '0.5rem',
+                                    padding: '0.25rem 0.5rem',
+                                    backgroundColor: 'rgba(0,0,0,0.6)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    color: '#FFFFFF',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 500,
+                                }}>
+                                    {p.isMe ? 'You' : p.name}
+                                </div>
+
+                                {/* Mic indicator */}
+                                {!p.isMe && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '0.5rem',
+                                        right: '0.5rem',
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '50%',
+                                        backgroundColor: 'rgba(0,0,0,0.6)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}>
+                                        {p.isSpeaking ? (
+                                            <Mic size={14} color="#10B981" />
+                                        ) : (
+                                            <MicOff size={14} color="#EF4444" />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+
+                        {/* Empty state when no participants */}
+                        {participants.length === 0 && (
+                            <div style={{
+                                gridColumn: '1 / -1',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '3rem',
+                                color: 'var(--text-muted)',
+                            }}>
+                                <Users size={48} strokeWidth={1} />
+                                <p style={{ marginTop: '1rem' }}>Waiting for participants to join...</p>
+                                {joinCode && (
+                                    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                                        Share code: <strong style={{ color: 'var(--primary)' }}>{joinCode}</strong>
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Floating Video Tile (for users with camera on) */}
-                    {participants.some(p => p.hasCamera) && (
+                    {/* Floating Video Tile (shows local camera when on) */}
+                    {isCameraOn && (
                         <div style={{
                             position: 'absolute',
                             bottom: '1rem',
                             right: '1rem',
-                            width: '160px',
-                            height: '100px',
+                            width: '200px',
+                            height: '150px',
                             backgroundColor: 'var(--neutral-800)',
                             borderRadius: 'var(--radius-md)',
                             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
@@ -415,40 +631,43 @@ const Commons = () => {
                             alignItems: 'center',
                             justifyContent: 'center'
                         }}>
-                            {/* Placeholder for video */}
-                            <div style={{
-                                width: '100%',
-                                height: '100%',
-                                background: 'linear-gradient(135deg, #374151 0%, #1F2937 100%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <Video size={24} color="var(--text-muted)" />
-                            </div>
+                            {/* Local Video Element */}
+                            <video
+                                ref={localVideoRef}
+                                autoPlay
+                                playsInline
+                                muted
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    transform: 'scaleX(-1)', // Mirror for selfie view
+                                }}
+                            />
                             {/* Close button */}
                             <button
+                                onClick={toggleCamera}
                                 style={{
                                     position: 'absolute',
                                     top: '4px',
                                     right: '4px',
-                                    width: '20px',
-                                    height: '20px',
+                                    width: '24px',
+                                    height: '24px',
                                     borderRadius: '50%',
-                                    backgroundColor: 'rgba(0,0,0,0.5)',
+                                    backgroundColor: 'rgba(0,0,0,0.6)',
                                     border: 'none',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    color: 'white'
                                 }}
+                                title="Turn off camera"
                             >
-                                <X size={12} color="#fff" />
+                                <X size={14} />
                             </button>
                         </div>
                     )}
-
-                    {/* Room Controls Bar (bottom center) */}
                     <div style={{
                         position: 'absolute',
                         bottom: '1rem',
@@ -464,28 +683,28 @@ const Commons = () => {
                     }}>
                         {/* Mic Toggle */}
                         <button
-                            onClick={() => setIsMuted(!isMuted)}
+                            onClick={toggleMic}
                             style={{
                                 width: '40px',
                                 height: '40px',
                                 borderRadius: 'var(--radius-md)',
                                 border: 'none',
-                                backgroundColor: isMuted ? 'var(--bg-secondary)' : '#10B981',
-                                color: isMuted ? 'var(--text-secondary)' : '#FFFFFF',
+                                backgroundColor: isMicOn ? '#10B981' : 'var(--bg-secondary)',
+                                color: isMicOn ? '#FFFFFF' : 'var(--text-secondary)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s ease'
                             }}
-                            title={isMuted ? 'Unmute' : 'Mute'}
+                            title={isMicOn ? 'Mute' : 'Unmute'}
                         >
-                            {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                            {isMicOn ? <Mic size={18} /> : <MicOff size={18} />}
                         </button>
 
                         {/* Camera Toggle */}
                         <button
-                            onClick={() => setIsCameraOn(!isCameraOn)}
+                            onClick={toggleCamera}
                             style={{
                                 width: '40px',
                                 height: '40px',
@@ -503,8 +722,29 @@ const Commons = () => {
                         >
                             {isCameraOn ? <Video size={18} /> : <VideoOff size={18} />}
                         </button>
+
+                        {/* Screen Share Toggle */}
+                        <button
+                            onClick={toggleScreenShare}
+                            style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: 'var(--radius-md)',
+                                border: 'none',
+                                backgroundColor: isScreenSharing ? '#8B5CF6' : 'var(--bg-secondary)',
+                                color: isScreenSharing ? '#FFFFFF' : 'var(--text-secondary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                            title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
+                        >
+                            <Monitor size={18} />
+                        </button>
                     </div>
-                </div>
+                </div >
             ) : (
                 /* Lobby Mode: Room Grid + Sidebar */
                 <div style={{
@@ -762,110 +1002,112 @@ const Commons = () => {
             )}
 
             {/* FR-47: Shared Playlist Widget (Bottom-Right) - Only show in lobby mode */}
-            {!activeRoom && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: '2rem',
-                    right: '2rem',
-                    width: '280px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '1.25rem',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
-                }}>
-                    {/* Album Art Placeholder */}
+            {
+                !activeRoom && (
                     <div style={{
-                        width: '60px',
-                        height: '60px',
-                        backgroundColor: 'var(--bg-secondary)',
-                        borderRadius: 'var(--radius-sm)',
-                        marginBottom: '0.75rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                        position: 'fixed',
+                        bottom: '2rem',
+                        right: '2rem',
+                        width: '280px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '1.25rem',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
                     }}>
-                        <Music size={24} color="var(--text-muted)" />
-                    </div>
-
-                    <h3 style={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: 'var(--text-primary)',
-                        marginBottom: '0.25rem'
-                    }}>
-                        Shared Playlist
-                    </h3>
-
-                    <p style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--text-muted)',
-                        marginBottom: '0.75rem'
-                    }}>
-                        Earned by community
-                    </p>
-
-                    {/* Progress Bar */}
-                    <div style={{
-                        width: '100%',
-                        height: '4px',
-                        backgroundColor: 'var(--bg-secondary)',
-                        borderRadius: '2px',
-                        marginBottom: '0.75rem',
-                        overflow: 'hidden'
-                    }}>
+                        {/* Album Art Placeholder */}
                         <div style={{
-                            width: '45%',
-                            height: '100%',
-                            backgroundColor: 'var(--accent-primary)'
-                        }} />
-                    </div>
-
-                    {/* Playback Controls */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '1rem'
-                    }}>
-                        <button style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--text-muted)',
-                            cursor: 'pointer',
-                            padding: '0.25rem'
+                            width: '60px',
+                            height: '60px',
+                            backgroundColor: 'var(--bg-secondary)',
+                            borderRadius: 'var(--radius-sm)',
+                            marginBottom: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                         }}>
-                            <SkipBack size={20} />
-                        </button>
+                            <Music size={24} color="var(--text-muted)" />
+                        </div>
 
-                        <button
-                            onClick={() => setIsPlaying(!isPlaying)}
-                            style={{
+                        <h3 style={{
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            color: 'var(--text-primary)',
+                            marginBottom: '0.25rem'
+                        }}>
+                            Shared Playlist
+                        </h3>
+
+                        <p style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-muted)',
+                            marginBottom: '0.75rem'
+                        }}>
+                            Earned by community
+                        </p>
+
+                        {/* Progress Bar */}
+                        <div style={{
+                            width: '100%',
+                            height: '4px',
+                            backgroundColor: 'var(--bg-secondary)',
+                            borderRadius: '2px',
+                            marginBottom: '0.75rem',
+                            overflow: 'hidden'
+                        }}>
+                            <div style={{
+                                width: '45%',
+                                height: '100%',
+                                backgroundColor: 'var(--accent-primary)'
+                            }} />
+                        </div>
+
+                        {/* Playback Controls */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '1rem'
+                        }}>
+                            <button style={{
                                 background: 'none',
                                 border: 'none',
-                                color: 'var(--text-primary)',
+                                color: 'var(--text-muted)',
                                 cursor: 'pointer',
                                 padding: '0.25rem'
-                            }}
-                        >
-                            {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-                        </button>
+                            }}>
+                                <SkipBack size={20} />
+                            </button>
 
-                        <button style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--text-muted)',
-                            cursor: 'pointer',
-                            padding: '0.25rem'
-                        }}>
-                            <SkipForward size={20} />
-                        </button>
+                            <button
+                                onClick={() => setIsPlaying(!isPlaying)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--text-primary)',
+                                    cursor: 'pointer',
+                                    padding: '0.25rem'
+                                }}
+                            >
+                                {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                            </button>
+
+                            <button style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--text-muted)',
+                                cursor: 'pointer',
+                                padding: '0.25rem'
+                            }}>
+                                <SkipForward size={20} />
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
