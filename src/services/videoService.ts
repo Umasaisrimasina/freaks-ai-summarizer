@@ -50,9 +50,9 @@ export async function fetchVideoToken(roomId: string): Promise<VideoCredentials>
     }
 
     try {
-        // API server runs on port 3001 (Express backend)
-        const API_BASE = 'http://localhost:3001';
-        const response = await fetch(`${API_BASE}/api/video/token`, {
+        // API server runs on port 5174 (Express backend)
+        const API_BASE = 'http://localhost:5174';
+        const response = await fetch(`${API_BASE}/video/token`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -106,4 +106,105 @@ export function isVideoConfigured(): boolean {
     // This will be true if the API endpoint exists
     // The actual provider check happens server-side
     return true;
+}
+
+// ============================================================
+// ADMIN CONTROLS
+// ============================================================
+
+const API_BASE = 'http://localhost:5174';
+
+/**
+ * Mute a participant's audio or video (admin only)
+ * @param roomId - The room ID
+ * @param participantId - The participant's identity
+ * @param trackType - 'audio', 'video', or 'all'
+ */
+export async function muteParticipant(
+    roomId: string, 
+    participantId: string, 
+    trackType: 'audio' | 'video' | 'all' = 'audio'
+): Promise<{ success: boolean; message: string }> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        throw { message: 'Not authenticated', retryable: false } as VideoError;
+    }
+
+    const idToken = await currentUser.getIdToken(true);
+
+    const response = await fetch(`${API_BASE}/video/admin/mute`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ roomId, participantId, trackType }),
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Mute failed' }));
+        throw { message: err.error || 'Failed to mute participant', retryable: false } as VideoError;
+    }
+
+    return response.json();
+}
+
+/**
+ * Kick a participant from the room (admin only)
+ * @param roomId - The room ID
+ * @param participantId - The participant's identity
+ */
+export async function kickParticipant(
+    roomId: string, 
+    participantId: string
+): Promise<{ success: boolean; message: string }> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        throw { message: 'Not authenticated', retryable: false } as VideoError;
+    }
+
+    const idToken = await currentUser.getIdToken(true);
+
+    const response = await fetch(`${API_BASE}/video/admin/kick`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ roomId, participantId }),
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Kick failed' }));
+        throw { message: err.error || 'Failed to kick participant', retryable: false } as VideoError;
+    }
+
+    return response.json();
+}
+
+/**
+ * Get list of participants in a room (admin only)
+ * @param roomId - The room ID
+ */
+export async function listParticipants(roomId: string): Promise<any> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        throw { message: 'Not authenticated', retryable: false } as VideoError;
+    }
+
+    const idToken = await currentUser.getIdToken(true);
+
+    const response = await fetch(`${API_BASE}/video/admin/participants?roomId=${encodeURIComponent(roomId)}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${idToken}`,
+        },
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Failed to list participants' }));
+        throw { message: err.error || 'Failed to list participants', retryable: false } as VideoError;
+    }
+
+    return response.json();
 }

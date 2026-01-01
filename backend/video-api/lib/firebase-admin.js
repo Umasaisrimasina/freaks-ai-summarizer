@@ -76,25 +76,39 @@ export async function verifyToken(idToken) {
 
 /**
  * Create a mock user from token (extracts email if possible)
+ * In dev mode, extracts user info from Firebase token without verification
  */
 function createMockUser(idToken) {
     // Try to decode JWT payload for user info (without verification)
     try {
         const parts = idToken.split('.');
         if (parts.length === 3) {
-            const payload = JSON.parse(atob(parts[1]));
+            // Base64 decode the payload
+            const payloadStr = Buffer.from(parts[1], 'base64').toString('utf-8');
+            const payload = JSON.parse(payloadStr);
+            
+            // Firebase tokens use 'user_id' or 'sub' for the UID
+            const uid = payload.user_id || payload.sub;
+            const name = payload.name || payload.email?.split('@')[0] || 'User';
+            const email = payload.email || 'user@localhost';
+            
+            console.log(`[Firebase] Mock user from token: uid=${uid}, name=${name}`);
+            
             return {
-                uid: payload.user_id || payload.sub || 'dev-user-' + Date.now(),
-                name: payload.name || payload.email?.split('@')[0] || 'User',
-                email: payload.email || 'user@localhost'
+                uid: uid || 'dev-user-' + Date.now(),
+                name,
+                email
             };
         }
     } catch (e) {
-        // Ignore parsing errors
+        console.warn('[Firebase] Could not parse token:', e.message);
     }
 
+    // Fallback if token parsing fails
+    const fallbackId = 'dev-user-' + Date.now();
+    console.log(`[Firebase] Using fallback mock user: ${fallbackId}`);
     return {
-        uid: 'dev-user-' + Date.now(),
+        uid: fallbackId,
         name: 'Dev User',
         email: 'dev@localhost'
     };

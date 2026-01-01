@@ -154,12 +154,15 @@ const StudyArena = () => {
             onClick={() => handleStartMode('quiz')}
             style={{
               flex: 1,
-              background: 'linear-gradient(135deg, #506087 0%, #3D4F6E 100%)',
+              background: 'var(--mode-card-bg)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
               borderRadius: 'var(--radius-lg)',
               padding: '3rem 2rem',
               cursor: 'pointer',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              boxShadow: '0 10px 30px rgba(80, 96, 135, 0.3)',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+              boxShadow: 'var(--mode-card-shadow)',
+              border: '1px solid var(--mode-card-border)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -167,31 +170,31 @@ const StudyArena = () => {
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-8px)';
-              e.currentTarget.style.boxShadow = '0 20px 40px rgba(80, 96, 135, 0.4)';
+              e.currentTarget.style.boxShadow = 'var(--mode-card-shadow-hover)';
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 10px 30px rgba(80, 96, 135, 0.3)';
+              e.currentTarget.style.boxShadow = 'var(--mode-card-shadow)';
             }}
           >
             {/* Quiz Icon */}
             <div style={{
               width: '80px',
               height: '80px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: 'var(--mode-card-icon-bg)',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: '1.5rem'
             }}>
-              <HelpCircle size={40} color="#FFFFFF" />
+              <HelpCircle size={40} color="var(--mode-card-text)" />
             </div>
 
             <h2 style={{
               fontSize: '2rem',
               fontWeight: 700,
-              color: '#FFFFFF',
+              color: 'var(--mode-card-text)',
               marginBottom: '0.75rem'
             }}>
               Quiz Mode
@@ -199,7 +202,7 @@ const StudyArena = () => {
 
             <p style={{
               fontSize: '1rem',
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: 'var(--mode-card-text-muted)',
               marginBottom: '2rem',
               lineHeight: 1.6
             }}>
@@ -208,22 +211,22 @@ const StudyArena = () => {
 
             <button style={{
               padding: '0.875rem 2rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
+              backgroundColor: 'var(--mode-card-btn-bg)',
+              border: '2px solid var(--mode-card-btn-border)',
               borderRadius: 'var(--radius-md)',
-              color: '#FFFFFF',
+              color: 'var(--mode-card-text)',
               fontSize: '1rem',
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+                e.currentTarget.style.backgroundColor = 'var(--mode-card-btn-hover-bg)';
+                e.currentTarget.style.borderColor = 'var(--mode-card-btn-hover-border)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                e.currentTarget.style.backgroundColor = 'var(--mode-card-btn-bg)';
+                e.currentTarget.style.borderColor = 'var(--mode-card-btn-border)';
               }}
             >
               START QUIZ
@@ -235,12 +238,15 @@ const StudyArena = () => {
             onClick={() => handleStartMode('flashcard')}
             style={{
               flex: 1,
-              background: 'linear-gradient(135deg, #4C5C82 0%, #3D4A6B 100%)',
+              background: 'var(--mode-card-bg)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
               borderRadius: 'var(--radius-lg)',
               padding: '3rem 2rem',
               cursor: 'pointer',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              boxShadow: '0 10px 30px rgba(76, 92, 130, 0.3)',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+              boxShadow: 'var(--mode-card-shadow)',
+              border: '1px solid var(--mode-card-border)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -248,31 +254,31 @@ const StudyArena = () => {
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-8px)';
-              e.currentTarget.style.boxShadow = '0 20px 40px rgba(76, 92, 130, 0.4)';
+              e.currentTarget.style.boxShadow = 'var(--mode-card-shadow-hover)';
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 10px 30px rgba(76, 92, 130, 0.3)';
+              e.currentTarget.style.boxShadow = 'var(--mode-card-shadow)';
             }}
           >
             {/* Flashcard Icon */}
             <div style={{
               width: '80px',
               height: '80px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: 'var(--mode-card-icon-bg)',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: '1.5rem'
             }}>
-              <Layers size={40} color="#FFFFFF" />
+              <Layers size={40} color="var(--mode-card-text)" />
             </div>
 
             <h2 style={{
               fontSize: '2rem',
               fontWeight: 700,
-              color: '#FFFFFF',
+              color: 'var(--mode-card-text)',
               marginBottom: '0.75rem'
             }}>
               Flashcard Mode
@@ -280,7 +286,7 @@ const StudyArena = () => {
 
             <p style={{
               fontSize: '1rem',
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: 'var(--mode-card-text-muted)',
               marginBottom: '2rem',
               lineHeight: 1.6
             }}>
@@ -289,22 +295,22 @@ const StudyArena = () => {
 
             <button style={{
               padding: '0.875rem 2rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
+              backgroundColor: 'var(--mode-card-btn-bg)',
+              border: '2px solid var(--mode-card-btn-border)',
               borderRadius: 'var(--radius-md)',
-              color: '#FFFFFF',
+              color: 'var(--mode-card-text)',
               fontSize: '1rem',
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+                e.currentTarget.style.backgroundColor = 'var(--mode-card-btn-hover-bg)';
+                e.currentTarget.style.borderColor = 'var(--mode-card-btn-hover-border)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                e.currentTarget.style.backgroundColor = 'var(--mode-card-btn-bg)';
+                e.currentTarget.style.borderColor = 'var(--mode-card-btn-border)';
               }}
             >
               START FLASHCARDS

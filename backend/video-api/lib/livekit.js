@@ -3,10 +3,11 @@
  * Generates access tokens for LiveKit rooms
  */
 
-import { AccessToken } from 'livekit-server-sdk';
+import { AccessToken, TrackSource } from 'livekit-server-sdk';
 
 /**
- * Generate a LiveKit access token
+ * Generate a LiveKit access token with full media permissions
+ * SECURITY: Identity comes from verified Firebase token, NOT client
  */
 export async function generateToken(roomId, user) {
     const apiKey = process.env.LIVEKIT_API_KEY;
@@ -16,20 +17,22 @@ export async function generateToken(roomId, user) {
         throw new Error('LiveKit credentials not configured');
     }
 
-    // Create access token
+    // Create access token with identity from verified Firebase user
+    // TTL: 15 minutes max for security
     const token = new AccessToken(apiKey, apiSecret, {
         identity: user.uid,
-        name: user.name,
-        ttl: '15m', // 15 minutes
+        name: user.name || user.email?.split('@')[0] || 'User',
+        ttl: '15m',
     });
 
-    // Grant room permissions
+    // Grant comprehensive room permissions for Meet-like functionality
     token.addGrant({
         room: roomId,
         roomJoin: true,
-        canPublish: true,
-        canSubscribe: true,
-        canPublishData: true,
+        roomCreate: true,           // Allow room creation if it doesn't exist
+        canPublish: true,           // Allow publishing camera/mic/screen
+        canPublishData: true,       // Allow data messages (chat)
+        canSubscribe: true,         // Allow subscribing to others' tracks
     });
 
     return await token.toJwt();

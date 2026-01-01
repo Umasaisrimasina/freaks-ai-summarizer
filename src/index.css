@@ -109,6 +109,19 @@
   /* Easing Curves */
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Mode Card Styles (Light Theme - uses solid dark cards) */
+  --mode-card-bg: linear-gradient(135deg, #3D4F6E 0%, #2D3A52 100%);
+  --mode-card-border: rgba(255, 255, 255, 0.15);
+  --mode-card-shadow: 0 10px 30px rgba(61, 79, 110, 0.35);
+  --mode-card-shadow-hover: 0 20px 40px rgba(61, 79, 110, 0.45);
+  --mode-card-icon-bg: rgba(255, 255, 255, 0.2);
+  --mode-card-text: #FFFFFF;
+  --mode-card-text-muted: rgba(255, 255, 255, 0.85);
+  --mode-card-btn-bg: rgba(255, 255, 255, 0.2);
+  --mode-card-btn-border: rgba(255, 255, 255, 0.3);
+  --mode-card-btn-hover-bg: rgba(255, 255, 255, 0.3);
+  --mode-card-btn-hover-border: rgba(255, 255, 255, 0.5);
 }
 
 /* Override for Dark Theme */
@@ -139,6 +152,19 @@
 
   --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
   --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+
+  /* Mode Card Styles (Dark Theme - subtle glass effect) */
+  --mode-card-bg: rgba(255, 255, 255, 0.03);
+  --mode-card-border: rgba(255, 255, 255, 0.1);
+  --mode-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --mode-card-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.25);
+  --mode-card-icon-bg: rgba(255, 255, 255, 0.15);
+  --mode-card-text: #FFFFFF;
+  --mode-card-text-muted: rgba(255, 255, 255, 0.8);
+  --mode-card-btn-bg: rgba(255, 255, 255, 0.1);
+  --mode-card-btn-border: rgba(255, 255, 255, 0.2);
+  --mode-card-btn-hover-bg: rgba(255, 255, 255, 0.2);
+  --mode-card-btn-hover-border: rgba(255, 255, 255, 0.35);
 }
 
 * {

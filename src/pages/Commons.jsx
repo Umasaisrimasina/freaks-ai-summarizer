@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Users, Clock, Shield, Music, SkipBack, Play, Pause, SkipForward, Plus, X, ArrowRight, Mic, MicOff, Video, VideoOff, LogOut, FileText, Monitor } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Users, Clock, Shield, Music, SkipBack, Play, Pause, SkipForward, Plus, X, ArrowRight, Mic, MicOff, Video, VideoOff, LogOut, FileText, Monitor, PictureInPicture2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVideoProvider } from '../hooks/useVideoProvider';
+import { createRoom, getRoomByCode, joinRoom, leaveRoom } from '../services/roomService';
+import { LiveKitVideo } from '../components/LiveKitVideo';
 
 const Commons = () => {
     const navigate = useNavigate();
@@ -32,7 +34,10 @@ const Commons = () => {
         toggleMic,
         toggleScreenShare,
         localVideoStream,
+        localLivekitVideoTrack,
         joinCode,
+        muteParticipant,
+        kickParticipant,
     } = useVideoProvider();
 
     // Attach local video stream to video element when available
@@ -44,9 +49,10 @@ const Commons = () => {
         }
     }, [localVideoStream]);
 
-    // Map video participants to UI format (includes video stream for remote participants)
-    const participants = videoParticipants.length > 0
-        ? videoParticipants.map(p => ({
+    // Memoize participants to prevent unnecessary re-renders
+    const participants = useMemo(() => {
+        if (videoParticipants.length === 0) return [];
+        return videoParticipants.map(p => ({
             id: p.id,
             name: p.name,
             initials: p.initials,
@@ -55,8 +61,9 @@ const Commons = () => {
             hasCamera: p.isCameraOn,
             isMe: p.isLocal,
             videoStream: p.videoStream,
-        }))
-        : [];
+            livekitVideoTrack: p.livekitVideoTrack,
+        }));
+    }, [videoParticipants]);
 
     // FR-43: Collaborative Study Rooms
     const studyRooms = [
@@ -96,22 +103,52 @@ const Commons = () => {
     /**
      * Handle joining by code
      * Same security model as handleJoinRoom
+     * Fetches room metadata from Firestore to get the actual room name
      */
     const handleJoinByCode = async () => {
         if (roomCode.trim()) {
             setIsJoinModalOpen(false);
-            const customRoom = { id: 'custom', name: `Room ${roomCode}`, currentTask: 'Study Session', participants: 1 };
-            const code = roomCode.trim();
+            const code = roomCode.trim().toUpperCase();
             setRoomCode('');
 
-            // Enter room mode in-place FIRST
-            setActiveRoom(customRoom);
+            // Fetch room metadata from Firestore to get the real room name
+            let roomData = await getRoomByCode(code);
+            
+            if (roomData) {
+                // Room exists - use the actual room name from Firestore
+                const customRoom = { 
+                    id: roomData.id, 
+                    name: roomData.name, 
+                    currentTask: roomData.currentTask, 
+                    participants: roomData.participants 
+                };
+                
+                // Enter room mode in-place FIRST
+                setActiveRoom(customRoom);
 
-            // THEN attempt video connection (best-effort)
-            try {
-                await connectVideo(`room-custom-${code}`);
-            } catch (err) {
-                console.warn('[Commons] Video connection failed, continuing in demo mode');
+                // Update participant count in Firestore
+                await joinRoom(code);
+
+                // THEN attempt video connection
+                try {
+                    await connectVideo(code);
+                } catch (err) {
+                    console.warn('[Commons] Video connection failed, continuing in demo mode');
+                }
+            } else {
+                // Room doesn't exist in Firestore - create it with the code as ID
+                // This handles the case where a room was created before the Firestore integration
+                const customRoom = { id: code, name: `Room ${code}`, currentTask: 'Study Session', participants: 1 };
+                
+                // Enter room mode in-place FIRST
+                setActiveRoom(customRoom);
+
+                // THEN attempt video connection
+                try {
+                    await connectVideo(code);
+                } catch (err) {
+                    console.warn('[Commons] Video connection failed, continuing in demo mode');
+                }
             }
         }
     };
@@ -121,6 +158,13 @@ const Commons = () => {
      * Disconnects from video and cleans up resources
      */
     const handleLeaveRoom = () => {
+        // Update participant count in Firestore
+        if (activeRoom?.id) {
+            leaveRoom(activeRoom.id).catch(err => 
+                console.warn('[Commons] Could not update participant count:', err)
+            );
+        }
+
         // Disconnect from video (cleans up credentials and resets state)
         disconnectVideo();
 
@@ -130,14 +174,23 @@ const Commons = () => {
 
     /**
      * Handle creating a new study room
-     * Generates a unique room ID and enters room mode
+     * Generates a unique room ID and stores metadata in Firestore
      */
     const handleCreateRoom = async () => {
-        // Generate a unique room ID
-        const roomId = `room-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+        // Generate a short room ID that IS the join code (6 chars, alphanumeric)
+        const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const roomName = 'New Study Room';
+        
+        // Store room metadata in Firestore so others can see the name when joining
+        try {
+            await createRoom(roomId, roomName, 'Study Session');
+        } catch (err) {
+            console.warn('[Commons] Could not save room to Firestore:', err);
+        }
+
         const newRoom = {
             id: roomId,
-            name: 'New Study Room',
+            name: roomName,
             currentTask: 'Study Session',
             participants: 1
         };
@@ -159,6 +212,26 @@ const Commons = () => {
             padding: '2rem',
             position: 'relative'
         }}>
+            {/* Video Error Display */}
+            {videoError && (
+                <div style={{
+                    position: 'fixed',
+                    top: '1rem',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: '#EF4444',
+                    color: 'white',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: 'var(--radius-lg)',
+                    zIndex: 1000,
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                }}>
+                    <span>⚠️ Video Error: {videoError}</span>
+                </div>
+            )}
             {/* Header: Conditional based on room mode */}
             {activeRoom ? (
                 /* Room Mode Header with Participant Avatars */
@@ -206,6 +279,28 @@ const Commons = () => {
                             </span>
                         </div>
                     )}
+                    
+                    {/* Connection Status Badge */}
+                    <div style={{
+                        padding: '0.25rem 0.75rem',
+                        backgroundColor: isVideoConnected ? '#10B98120' : isVideoConnecting ? '#F59E0B20' : '#EF444420',
+                        borderRadius: 'var(--radius-sm)',
+                        border: `1px solid ${isVideoConnected ? '#10B981' : isVideoConnecting ? '#F59E0B' : '#EF4444'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                    }}>
+                        <span style={{ 
+                            width: '8px', 
+                            height: '8px', 
+                            borderRadius: '50%', 
+                            backgroundColor: isVideoConnected ? '#10B981' : isVideoConnecting ? '#F59E0B' : '#EF4444'
+                        }}></span>
+                        <span style={{ fontSize: '0.75rem', color: isVideoConnected ? '#10B981' : isVideoConnecting ? '#F59E0B' : '#EF4444' }}>
+                            {isVideoConnected ? `Connected (${participants.length} in room)` : isVideoConnecting ? 'Connecting...' : 'Disconnected'}
+                        </span>
+                    </div>
+
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -514,26 +609,13 @@ const Commons = () => {
                                 }}
                             >
                                 {/* Video or Avatar */}
-                                {p.hasCamera && (p.isMe ? localVideoStream : p.videoStream) ? (
-                                    <video
-                                        autoPlay
-                                        playsInline
-                                        muted={p.isMe}
-                                        ref={(el) => {
-                                            if (el) {
-                                                if (p.isMe && localVideoStream) {
-                                                    el.srcObject = localVideoStream;
-                                                } else if (!p.isMe && p.videoStream) {
-                                                    el.srcObject = p.videoStream;
-                                                }
-                                            }
-                                        }}
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'cover',
-                                            transform: p.isMe ? 'scaleX(-1)' : 'none',
-                                        }}
+                                {/* Show video if we have a LiveKit track */}
+                                {(p.isMe ? localLivekitVideoTrack : p.livekitVideoTrack) ? (
+                                    <LiveKitVideo
+                                        track={p.isMe ? localLivekitVideoTrack : p.livekitVideoTrack}
+                                        isLocal={p.isMe}
+                                        participantName={p.isMe ? 'You' : p.name}
+                                        enablePiP={!p.isMe}
                                     />
                                 ) : (
                                     /* Avatar fallback when camera is off */
@@ -553,20 +635,84 @@ const Commons = () => {
                                     </div>
                                 )}
 
-                                {/* Name overlay */}
-                                <div style={{
-                                    position: 'absolute',
-                                    bottom: '0.5rem',
-                                    left: '0.5rem',
-                                    padding: '0.25rem 0.5rem',
-                                    backgroundColor: 'rgba(0,0,0,0.6)',
-                                    borderRadius: 'var(--radius-sm)',
-                                    color: '#FFFFFF',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 500,
-                                }}>
-                                    {p.isMe ? 'You' : p.name}
-                                </div>
+                                {/* Name overlay - only show if no video (LiveKitVideo has its own) */}
+                                {!(p.isMe ? localLivekitVideoTrack : p.livekitVideoTrack) && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '0.5rem',
+                                        left: '0.5rem',
+                                        padding: '0.25rem 0.5rem',
+                                        backgroundColor: 'rgba(0,0,0,0.6)',
+                                        borderRadius: 'var(--radius-sm)',
+                                        color: '#FFFFFF',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 500,
+                                    }}>
+                                        {p.isMe ? 'You' : p.name}
+                                    </div>
+                                )}
+
+                                {/* Admin controls for remote participants */}
+                                {!p.isMe && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '0.5rem',
+                                        right: '0.5rem',
+                                        display: 'flex',
+                                        gap: '0.25rem',
+                                    }}>
+                                        {/* Mute button */}
+                                        <button
+                                            onClick={() => muteParticipant(p.id, 'audio')}
+                                            title="Mute participant"
+                                            style={{
+                                                width: '28px',
+                                                height: '28px',
+                                                borderRadius: '4px',
+                                                backgroundColor: 'rgba(0,0,0,0.6)',
+                                                border: 'none',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                color: '#fff',
+                                                opacity: 0.8,
+                                                transition: 'opacity 0.2s',
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
+                                        >
+                                            <MicOff size={14} />
+                                        </button>
+                                        {/* Kick button */}
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(`Remove ${p.name} from the room?`)) {
+                                                    kickParticipant(p.id);
+                                                }
+                                            }}
+                                            title="Remove from room"
+                                            style={{
+                                                width: '28px',
+                                                height: '28px',
+                                                borderRadius: '4px',
+                                                backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                                                border: 'none',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                color: '#fff',
+                                                opacity: 0.8,
+                                                transition: 'opacity 0.2s',
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Mic indicator */}
                                 {!p.isMe && (

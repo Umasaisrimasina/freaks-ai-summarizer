@@ -1,0 +1,5 @@
+[Firebase] No service account configured - auth will be skipped
+[Firebase] Token verification failed: Firebase ID token has incorrect "aud" (audience) claim. Expected "testingvc-91e9e" but got "freaks-ai-summarizer". Make sure the ID token comes from the same Firebase project as the service account used to authenticate this SDK. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.
+[Firebase] Dev mode - returning mock user
+[Firebase] Token verification failed: Firebase ID token has incorrect "aud" (audience) claim. Expected "testingvc-91e9e" but got "freaks-ai-summarizer". Make sure the ID token comes from the same Firebase project as the service account used to authenticate this SDK. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.
+[Firebase] Dev mode - returning mock user
