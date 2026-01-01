@@ -612,9 +612,9 @@ const Dashboard = () => {
                             key={task.id}
                             style={{
                                 padding: '1rem',
-                                backgroundColor: task.urgent ? 'var(--secondary-50)' : 'var(--bg-secondary)',
+                                backgroundColor: task.urgent ? 'var(--accent-light)' : 'var(--bg-secondary)',
                                 borderRadius: 'var(--radius-md)',
-                                borderLeft: task.urgent ? '3px solid var(--primary-600)' : 'none',
+                                borderLeft: task.urgent ? '3px solid var(--accent-primary)' : 'none',
                                 cursor: 'pointer',
                                 transition: 'transform 0.15s ease'
                             }}
@@ -636,7 +636,7 @@ const Dashboard = () => {
                                 </div>
                                 <div style={{
                                     fontSize: 'var(--text-small)',
-                                    color: task.urgent ? 'var(--primary-600)' : 'var(--text-muted)',
+                                    color: task.urgent ? 'var(--accent-primary)' : 'var(--text-muted)',
                                     fontWeight: task.urgent ? 600 : 400
                                 }}>
                                     {task.time}

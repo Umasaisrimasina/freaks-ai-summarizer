@@ -214,7 +214,7 @@ const KnowledgeLab = () => {
 
   const inputTypes = [
     { id: 'pdf', label: 'PDF (recommended)', icon: FileText, recommended: true },
-    { id: 'url', label: 'Web Link', icon: Link },
+    { id: 'url', label: 'YouTube Link', icon: Link },
     { id: 'text', label: 'Text Note', icon: Type },
   ];
 
@@ -462,7 +462,8 @@ const KnowledgeLab = () => {
               highlighting how{' '}
               <span
                 style={{
-                  backgroundColor: 'var(--secondary-100)',
+                  backgroundColor: 'var(--accent-light)',
+                  color: 'var(--text-primary)',
                   padding: '0.1rem 0.25rem',
                   borderRadius: '2px',
                   cursor: 'pointer',
@@ -587,17 +588,19 @@ const KnowledgeLab = () => {
       </div>
 
       {/* Add Study Material Modal */}
-      {isModalOpen && (
+      {isModalOpen && createPortal(
         <div
           style={{
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'center',
             paddingTop: '10vh',
-            zIndex: 100
+            zIndex: 9999
           }}
           onClick={handleCancel}
         >
@@ -740,8 +743,8 @@ const KnowledgeLab = () => {
                             alignItems: 'center',
                             gap: '0.75rem',
                             padding: '0.875rem 1rem',
-                            backgroundColor: selectedType === type.id ? 'var(--primary-50)' : 'var(--bg-secondary)',
-                            border: selectedType === type.id ? '1px solid var(--primary-300)' : '1px solid transparent',
+                            backgroundColor: selectedType === type.id ? 'var(--accent-light)' : 'var(--bg-secondary)',
+                            border: selectedType === type.id ? '1px solid var(--accent-primary)' : '1px solid transparent',
                             borderRadius: 'var(--radius-md)',
                             cursor: 'pointer',
                             transition: 'all var(--transition-fast)'
@@ -753,13 +756,13 @@ const KnowledgeLab = () => {
                             value={type.id}
                             checked={selectedType === type.id}
                             onChange={(e) => setSelectedType(e.target.value)}
-                            style={{ accentColor: 'var(--primary-600)' }}
+                            style={{ accentColor: 'var(--accent-primary)' }}
                           />
                           <span style={{ color: 'var(--text-primary)', fontSize: 'var(--text-body)' }}>
                             {type.label}
                           </span>
                           {type.recommended && selectedType === type.id && (
-                            <Check size={16} color="var(--primary-600)" style={{ marginLeft: 'auto' }} />
+                            <Check size={16} color="var(--accent-primary)" style={{ marginLeft: 'auto' }} />
                           )}
                         </label>
                       ))}
@@ -957,7 +960,8 @@ const KnowledgeLab = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

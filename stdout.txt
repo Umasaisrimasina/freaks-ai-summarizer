@@ -1,0 +1,34 @@
+[Env] Loaded from: c:\Users\Asus\Documents\freaks-ai-summarizer\.env.local
+[Server] Starting server...
+
+╔═══════════════════════════════════════════╗
+║     Video API Server Started              ║
+╠═══════════════════════════════════════════╣
+║  Port:     3001                            ║
+║  Provider: livekit                         ║
+║  Health:   http://localhost:3001/health    ║
+╚═══════════════════════════════════════════╝
+  
+[Server] Server is now listening on port 3001
+[Server] Server is listening
+[Token] Received roomId from client: "D97BUB"
+[Token] Normalized roomId: "D97BUB"
+[Firebase] Admin SDK initialized
+[Token] User verified: wgPqX75jCLgcdTqHEcnFBwfcBoj2 (chennakesav chennakesavmovva)
+[Token] ========================================
+[Token] LiveKit token generated
+[Token]   Room ID: "D97BUB"
+[Token]   User ID: "wgPqX75jCLgcdTqHEcnFBwfcBoj2"
+[Token]   User Name: "chennakesav chennakesavmovva"
+[Token]   Room URL: "wss://freaks-ai-7z951ahs.livekit.cloud"
+[Token] ========================================
+[Token] Received roomId from client: "D97BUB"
+[Token] Normalized roomId: "D97BUB"
+[Token] User verified: 10pkQwSXkeVcTWFOiwZASxLInwB3 (For Dudez)
+[Token] ========================================
+[Token] LiveKit token generated
+[Token]   Room ID: "D97BUB"
+[Token]   User ID: "10pkQwSXkeVcTWFOiwZASxLInwB3"
+[Token]   User Name: "For Dudez"
+[Token]   Room URL: "wss://freaks-ai-7z951ahs.livekit.cloud"
+[Token] ========================================

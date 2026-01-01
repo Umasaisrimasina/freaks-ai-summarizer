@@ -1,0 +1,112 @@
+name: Security Guard
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  security-check:
+    runs-on: ubuntu-latest
+    name: Security Invariant Checks
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Check 1: Critical security files must exist
+      - name: Verify security-critical files exist
+        run: |
+          echo "Checking security-critical files..."
+          
+          FILES=(
+            "src/pages/api/video/token.ts"
+            "src/lib/auth/verifyFirebase.ts"
+            "src/lib/security/rateLimit.ts"
+            "src/lib/security/csrf.ts"
+          )
+          
+          for file in "${FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ SECURITY VIOLATION: $file is missing!"
+              echo "This file is required for security. Deletion is not allowed."
+              exit 1
+            fi
+            echo "✅ $file exists"
+          done
+      
+      # Check 2: Rate limiting must be imported and used in token endpoint
+      - name: Verify rate limiting is enforced
+        run: |
+          echo "Checking rate limiting enforcement..."
+          
+          if ! grep -q "checkRateLimit" src/pages/api/video/token.ts; then
+            echo "❌ SECURITY VIOLATION: Rate limiting removed from token endpoint!"
+            exit 1
+          fi
+          echo "✅ Rate limiting is enforced"
+      
+      # Check 3: CSRF validation must be imported and used
+      - name: Verify CSRF protection is enforced
+        run: |
+          echo "Checking CSRF protection..."
+          
+          if ! grep -q "validateCsrf" src/pages/api/video/token.ts; then
+            echo "❌ SECURITY VIOLATION: CSRF protection removed from token endpoint!"
+            exit 1
+          fi
+          echo "✅ CSRF protection is enforced"
+      
+      # Check 4: Firebase verification must be used
+      - name: Verify Firebase auth is enforced
+        run: |
+          echo "Checking Firebase authentication..."
+          
+          if ! grep -q "verifyFirebaseToken" src/pages/api/video/token.ts; then
+            echo "❌ SECURITY VIOLATION: Firebase auth removed from token endpoint!"
+            exit 1
+          fi
+          echo "✅ Firebase authentication is enforced"
+      
+      # Check 5: is_owner must be false
+      - name: Verify owner privileges are restricted
+        run: |
+          echo "Checking owner privilege restriction..."
+          
+          if grep -q "is_owner:\s*true" src/lib/video/daily.ts; then
+            echo "❌ SECURITY VIOLATION: is_owner set to true in daily.ts!"
+            exit 1
+          fi
+          echo "✅ Owner privileges are restricted"
+      
+      # Check 6: Client must not send identity fields
+      - name: Verify client does not send identity
+        run: |
+          echo "Checking client identity protection..."
+          
+          if grep -q "userId:" src/services/videoService.ts || \
+             grep -q "userName:" src/services/videoService.ts || \
+             grep -q "role:" src/services/videoService.ts; then
+            echo "❌ SECURITY VIOLATION: Client sending identity fields!"
+            exit 1
+          fi
+          echo "✅ Client only sends roomId"
+      
+      # Check 7: Token TTL must be <= 15 minutes
+      - name: Verify token TTL limit
+        run: |
+          echo "Checking token TTL..."
+          
+          # Look for TTL values greater than 900 seconds (15 min)
+          if grep -qE "ttl[Ss]econds\s*[=:]\s*(9[1-9][0-9]|[1-9][0-9]{3,})" src/lib/video/*.ts; then
+            echo "❌ SECURITY VIOLATION: Token TTL exceeds 15 minutes!"
+            exit 1
+          fi
+          echo "✅ Token TTL is within limit"
+      
+      - name: Security check passed
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "✅ ALL SECURITY INVARIANTS VERIFIED"
+          echo "=========================================="
